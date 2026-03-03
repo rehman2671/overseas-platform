@@ -1,0 +1,229 @@
+version: '3.8'
+
+services:
+  # Nginx - API Gateway & Reverse Proxy
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: overseasjob-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - frontend
+      - backend
+      - ai-service
+    networks:
+      - overseasjob-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Frontend - Next.js Application
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: overseasjob-frontend
+    expose:
+      - "3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=/api
+      - NEXT_PUBLIC_AI_URL=/ai
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    networks:
+      - overseasjob-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Backend - Laravel PHP API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: overseasjob-backend
+    expose:
+      - "8000"
+    environment:
+      - APP_NAME=OverseasJob
+      - APP_ENV=production
+      - APP_KEY=${APP_KEY:-base64:your-app-key-here}
+      - APP_DEBUG=false
+      - APP_URL=http://localhost
+      - LOG_CHANNEL=stack
+      - LOG_LEVEL=debug
+      - DB_CONNECTION=mysql
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_DATABASE=${MYSQL_DATABASE:-overseasjob}
+      - DB_USERNAME=${MYSQL_USER:-overseasjob}
+      - DB_PASSWORD=${MYSQL_PASSWORD:-secret}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-null}
+      - CACHE_DRIVER=redis
+      - SESSION_DRIVER=redis
+      - QUEUE_CONNECTION=redis
+      - JWT_SECRET=${JWT_SECRET:-your-jwt-secret-here}
+      - AI_SERVICE_URL=http://ai-service:5000
+      - FILESYSTEM_DISK=local
+      - RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID:-}
+      - RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET:-}
+      - STRIPE_KEY=${STRIPE_KEY:-}
+      - STRIPE_SECRET=${STRIPE_SECRET:-}
+    volumes:
+      - ./backend:/var/www/html
+      - /var/www/html/vendor
+      - backend-storage:/var/www/html/storage
+      - backend-cache:/var/www/html/bootstrap/cache
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - overseasjob-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # AI Service - Python FastAPI Microservice
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: overseasjob-ai
+    expose:
+      - "5000"
+    environment:
+      - MODEL_PATH=/app/models
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - WORKERS=2
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./ai-service:/app
+      - ai-models:/app/models
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - overseasjob-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 3G
+        reservations:
+          memory: 1G
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: overseasjob-mysql
+    expose:
+      - "3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-secret}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-overseasjob}
+      - MYSQL_USER=${MYSQL_USER:-overseasjob}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-secret}
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./mysql/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - overseasjob-network
+    restart: unless-stopped
+    command: >
+      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --innodb-buffer-pool-size=1G
+      --max-connections=200
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-secret}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: overseasjob-redis
+    expose:
+      - "6379"
+    volumes:
+      - redis-data:/data
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    networks:
+      - overseasjob-network
+    restart: unless-stopped
+    command: redis-server /usr/local/etc/redis/redis.conf
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # AI Training Service (Optional - for model training)
+  ai-training:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile.train
+    container_name: overseasjob-ai-training
+    environment:
+      - MODEL_PATH=/app/models
+      - DATA_PATH=/app/data
+    volumes:
+      - ./ai-service:/app
+      - ai-models:/app/models
+      - ai-training-data:/app/data
+    networks:
+      - overseasjob-network
+    profiles:
+      - training
+
+volumes:
+  mysql-data:
+    driver: local
+  redis-data:
+    driver: local
+  ai-models:
+    driver: local
+  ai-training-data:
+    driver: local
+  backend-storage:
+    driver: local
+  backend-cache:
+    driver: local
+
+networks:
+  overseasjob-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
