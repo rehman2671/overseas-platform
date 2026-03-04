@@ -20,12 +20,14 @@ class JobAlert extends Model
         'frequency',
         'is_active',
         'last_sent_at',
+        'sent_count',
     ];
 
     protected $casts = [
         'salary_min' => 'decimal:2',
         'is_active' => 'boolean',
         'last_sent_at' => 'datetime',
+        'sent_count' => 'integer',
     ];
 
     public function user(): BelongsTo

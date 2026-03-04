@@ -431,6 +431,126 @@ class JobController extends Controller
         ]);
     }
 
+    public function createJobAlert(Request $request)
+    {
+        $user = auth()->user();
+
+        $validator = Validator::make($request->all(), [
+            'keywords' => 'nullable|string|max:255',
+            'country' => 'nullable|string|max:100',
+            'job_type' => 'nullable|in:full_time,part_time,contract,internship',
+            'experience_level' => 'nullable|in:entry,mid,senior,executive',
+            'salary_min' => 'nullable|numeric|min:0',
+            'frequency' => 'required|in:daily,weekly,monthly',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        // Check if user already has an active alert with similar criteria
+        $existingAlert = \App\Models\JobAlert::where('user_id', $user->id)
+            ->where('is_active', true)
+            ->where('keywords', $request->keywords)
+            ->where('country', $request->country)
+            ->where('job_type', $request->job_type)
+            ->first();
+
+        if ($existingAlert) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You already have an active job alert with similar criteria'
+            ], 409);
+        }
+
+        $alert = \App\Models\JobAlert::create([
+            'user_id' => $user->id,
+            'keywords' => $request->keywords,
+            'country' => $request->country,
+            'job_type' => $request->job_type,
+            'experience_level' => $request->experience_level,
+            'salary_min' => $request->salary_min,
+            'frequency' => $request->frequency,
+            'is_active' => true,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Job alert created successfully',
+            'data' => $alert
+        ], 201);
+    }
+
+    public function getJobAlerts(Request $request)
+    {
+        $user = auth()->user();
+
+        $alerts = \App\Models\JobAlert::where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->paginate($request->get('per_page', 15));
+
+        return response()->json([
+            'success' => true,
+            'data' => $alerts
+        ]);
+    }
+
+    public function updateJobAlert(Request $request, $id)
+    {
+        $user = auth()->user();
+
+        $alert = \App\Models\JobAlert::where('user_id', $user->id)
+            ->findOrFail($id);
+
+        $validator = Validator::make($request->all(), [
+            'keywords' => 'nullable|string|max:255',
+            'country' => 'nullable|string|max:100',
+            'job_type' => 'nullable|in:full_time,part_time,contract,internship',
+            'experience_level' => 'nullable|in:entry,mid,senior,executive',
+            'salary_min' => 'nullable|numeric|min:0',
+            'frequency' => 'sometimes|in:daily,weekly,monthly',
+            'is_active' => 'sometimes|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $alert->update($request->only([
+            'keywords', 'country', 'job_type', 'experience_level',
+            'salary_min', 'frequency', 'is_active'
+        ]));
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Job alert updated successfully',
+            'data' => $alert
+        ]);
+    }
+
+    public function deleteJobAlert($id)
+    {
+        $user = auth()->user();
+
+        $alert = \App\Models\JobAlert::where('user_id', $user->id)
+            ->findOrFail($id);
+
+        $alert->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Job alert deleted successfully'
+        ]);
+    }
+
     private function matchWithResumes(Job $job): void
     {
         // Get all active resumes

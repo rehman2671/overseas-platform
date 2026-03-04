@@ -72,6 +72,12 @@ Route::middleware('auth:api')->group(function () {
     Route::delete('/jobs/{id}/save', [JobController::class, 'unsaveJob']);
     Route::get('/jobs/saved/list', [JobController::class, 'savedJobs']);
     
+    // Job Alerts
+    Route::post('/job-alerts', [JobController::class, 'createJobAlert']);
+    Route::get('/job-alerts', [JobController::class, 'getJobAlerts']);
+    Route::put('/job-alerts/{id}', [JobController::class, 'updateJobAlert']);
+    Route::delete('/job-alerts/{id}', [JobController::class, 'deleteJobAlert']);
+    
     // Recruiter routes
     Route::prefix('recruiter')->group(function () {
         Route::get('/jobs', [JobController::class, 'recruiterJobs']);
