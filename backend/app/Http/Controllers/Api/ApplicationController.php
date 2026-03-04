@@ -226,7 +226,7 @@ class ApplicationController extends Controller
         })->findOrFail($id);
 
         $validator = Validator::make($request->all(), [
-            'status' => 'required|in:shortlisted,rejected',
+            'status' => 'required|in:shortlisted,rejected,hired',
             'notes' => 'nullable|string|max:1000',
         ]);
 
@@ -238,10 +238,20 @@ class ApplicationController extends Controller
             ], 422);
         }
 
-        if ($request->status === 'shortlisted') {
+        $newStatus = $request->status;
+        if (!$application->canTransitionTo($newStatus)) {
+            return response()->json([
+                'success' => false,
+                'message' => "Cannot transition from {$application->status} to {$newStatus}"
+            ], 400);
+        }
+
+        if ($newStatus === 'shortlisted') {
             $application->shortlist($request->notes);
-        } else {
+        } elseif ($newStatus === 'rejected') {
             $application->reject($request->notes);
+        } elseif ($newStatus === 'hired') {
+            $application->hire($request->notes);
         }
 
         // TODO: Send notification to applicant
@@ -249,6 +259,121 @@ class ApplicationController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Application status updated successfully',
+            'data' => $application->refresh()
+        ]);
+    }
+
+    public function updateNotes(Request $request, $id)
+    {
+        $user = auth()->user();
+        
+        if (!$user->isRecruiter()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only recruiters can update notes'
+            ], 403);
+        }
+
+        $application = Application::whereHas('job.recruiter', function ($q) use ($user) {
+            $q->where('user_id', $user->id);
+        })->findOrFail($id);
+
+        $validator = Validator::make($request->all(), [
+            'notes' => 'required|string|max:1000',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $application->update(['recruiter_notes' => $request->notes]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Notes updated successfully',
+            'data' => $application
+        ]);
+    }
+
+    public function getTimeline($id)
+    {
+        $user = auth()->user();
+        
+        $application = Application::findOrFail($id);
+
+        // Check authorization: applicant can view their own, recruiter can view their job's applications
+        if ($user->id !== $application->user_id) {
+            if (!$user->isRecruiter() || !$application->job->recruiter || $application->job->recruiter->user_id !== $user->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized'
+                ], 403);
+            }
+        }
+
+        $timeline = [
+            [
+                'date' => $application->applied_at,
+                'status' => 'pending',
+                'label' => 'Applied',
+                'notes' => null,
+            ],
+        ];
+
+        if ($application->status_changed_at) {
+            $timeline[] = [
+                'date' => $application->status_changed_at,
+                'status' => $application->status,
+                'label' => ucfirst($application->status),
+                'notes' => $application->recruiter_notes,
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'application' => $application,
+                'timeline' => $timeline,
+            ]
+        ]);
+    }
+
+    public function withdraw(Request $request, $id)
+    {
+        $user = auth()->user();
+        
+        $application = Application::where('user_id', $user->id)->findOrFail($id);
+
+        if (!$application->canTransitionTo('withdrawn')) {
+            return response()->json([
+                'success' => false,
+                'message' => "Cannot withdraw an application with status: {$application->status}"
+            ], 400);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'reason' => 'nullable|string|max:500',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $application->withdraw($request->reason);
+
+        // TODO: Send notification to recruiter
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Application withdrawn successfully',
             'data' => $application
         ]);
     }

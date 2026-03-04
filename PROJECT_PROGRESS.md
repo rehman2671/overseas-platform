@@ -437,9 +437,24 @@ curl -H "Authorization: Bearer {token}" \
 
 ---
 
-## 🟠 IN PROGRESS (0)
+## 🟠 IN PROGRESS (1)
 
-All Phase 1 core tasks now complete!
+### TASK-012: Application Status Workflow (In Progress)
+- **Module:** Backend | Feature
+- **Effort:** 6-8 hours
+- **Status:** 🔄 Implementation started
+- **Completed Work:**
+  - ✅ Database migration for status_changed_at and withdrawn_reason fields
+  - ✅ Model updates with status transition logic and validation
+  - ✅ Workflow methods: shortlist(), reject(), hire(), withdraw() with state checking
+  - ✅ Controller methods for updateStatus, updateNotes, getTimeline, withdraw
+  - ✅ API routes registered for all new endpoints
+- **In Progress:** Testing and notification integration
+- **Dependencies:** TASK-001 ✅
+- **Blocked By:** None
+- **ETA:** ~2-4 hours remaining for testing and notification setup
+
+---
 
 ---
 

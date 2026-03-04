@@ -77,11 +77,13 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/applications', [ApplicationController::class, 'store']);
     Route::get('/applications/{id}', [ApplicationController::class, 'show']);
     Route::post('/applications/{id}/withdraw', [ApplicationController::class, 'withdraw']);
+    Route::get('/applications/{id}/timeline', [ApplicationController::class, 'getTimeline']);
     Route::get('/applications/stats/summary', [ApplicationController::class, 'stats']);
     
     // Recruiter application routes
     Route::get('/jobs/{jobId}/applications', [ApplicationController::class, 'jobApplications']);
     Route::put('/applications/{id}/status', [ApplicationController::class, 'updateStatus']);
+    Route::put('/applications/{id}/notes', [ApplicationController::class, 'updateNotes']);
 
     // Templates
     Route::get('/templates/{id}/preview', [TemplateController::class, 'preview']);

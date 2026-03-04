@@ -22,12 +22,15 @@ class Application extends Model
         'status',
         'recruiter_notes',
         'applied_at',
+        'status_changed_at',
+        'withdrawn_reason',
     ];
 
     protected $casts = [
         'match_components' => 'array',
         'skill_gaps' => 'array',
         'applied_at' => 'datetime',
+        'status_changed_at' => 'datetime',
     ];
 
     protected static function boot()
@@ -69,25 +72,87 @@ class Application extends Model
         return $this->status === 'rejected';
     }
 
-    public function shortlist(string $notes = null): void
+    public function isHired(): bool
     {
+        return $this->status === 'hired';
+    }
+
+    public function isWithdrawn(): bool
+    {
+        return $this->status === 'withdrawn';
+    }
+
+    public function canTransitionTo(string $newStatus): bool
+    {
+        $validTransitions = [
+            'pending' => ['shortlisted', 'rejected', 'withdrawn'],
+            'shortlisted' => ['rejected', 'hired', 'withdrawn'],
+            'rejected' => [],
+            'hired' => [],
+            'withdrawn' => [],
+        ];
+
+        return in_array($newStatus, $validTransitions[$this->status] ?? []);
+    }
+
+    public function shortlist(string $notes = null): bool
+    {
+        if (!$this->canTransitionTo('shortlisted')) {
+            return false;
+        }
+
         $this->update([
             'status' => 'shortlisted',
-            'recruiter_notes' => $notes,
+            'recruiter_notes' => $notes ?? $this->recruiter_notes,
+            'status_changed_at' => now(),
         ]);
+
+        return true;
     }
 
-    public function reject(string $notes = null): void
+    public function reject(string $notes = null): bool
     {
+        if (!$this->canTransitionTo('rejected')) {
+            return false;
+        }
+
         $this->update([
             'status' => 'rejected',
-            'recruiter_notes' => $notes,
+            'recruiter_notes' => $notes ?? $this->recruiter_notes,
+            'status_changed_at' => now(),
         ]);
+
+        return true;
     }
 
-    public function withdraw(): void
+    public function hire(string $notes = null): bool
     {
-        $this->update(['status' => 'withdrawn']);
+        if (!$this->canTransitionTo('hired')) {
+            return false;
+        }
+
+        $this->update([
+            'status' => 'hired',
+            'recruiter_notes' => $notes ?? $this->recruiter_notes,
+            'status_changed_at' => now(),
+        ]);
+
+        return true;
+    }
+
+    public function withdraw(string $reason = null): bool
+    {
+        if (!$this->canTransitionTo('withdrawn')) {
+            return false;
+        }
+
+        $this->update([
+            'status' => 'withdrawn',
+            'withdrawn_reason' => $reason,
+            'status_changed_at' => now(),
+        ]);
+
+        return true;
     }
 
     public function scopeForUser($query, int $userId)
