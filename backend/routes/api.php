@@ -71,6 +71,11 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/jobs/{id}/save', [JobController::class, 'saveJob']);
     Route::delete('/jobs/{id}/save', [JobController::class, 'unsaveJob']);
     Route::get('/jobs/saved/list', [JobController::class, 'savedJobs']);
+    
+    // Recruiter routes
+    Route::prefix('recruiter')->group(function () {
+        Route::get('/jobs', [JobController::class, 'recruiterJobs']);
+    });
 
     // Applications
     Route::get('/applications', [ApplicationController::class, 'index']);

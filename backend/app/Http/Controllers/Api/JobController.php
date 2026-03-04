@@ -371,7 +371,53 @@ class JobController extends Controller
         ]);
     }
 
+    public function recruiterJobs(Request $request)
+    {
+        $user = auth()->user();
+
+        if (!$user->isRecruiter()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only recruiters can access this endpoint'
+            ], 403);
+        }
+
+        $recruiter = $user->recruiter;
+
+        $jobs = Job::where('recruiter_id', $recruiter->id)
+            ->with(['applications' => function ($query) {
+                $query->select('id', 'job_id', 'status');
+            }])
+            ->orderBy('created_at', 'desc')
+            ->paginate($request->get('per_page', 15));
+
+        // Add application counts to each job
+        $jobs->getCollection()->transform(function ($job) {
+            return [
+                'id' => $job->id,
+                'slug' => $job->slug,
+                'title' => $job->title,
+                'company' => $job->company,
+                'location' => $job->country,
+                'employment_type' => $job->job_type,
+                'salary_min' => $job->salary_min,
+                'salary_max' => $job->salary_max,
+                'published_at' => $job->created_at,
+                'application_count' => $job->applications()->count(),
+                'shortlisted_count' => $job->applications()->where('status', 'shortlisted')->count(),
+                'pending_count' => $job->applications()->where('status', 'pending')->count(),
+                'active' => $job->status === 'active',
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $jobs
+        ]);
+    }
+
     public function countries()
+
     {
         $countries = Job::active()
             ->distinct()

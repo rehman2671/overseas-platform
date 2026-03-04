@@ -197,7 +197,7 @@ class ApplicationController extends Controller
         // Sorting
         $sortBy = $request->get('sort_by', 'applied_at');
         $sortOrder = $request->get('sort_order', 'desc');
-        $query->orderBy($sort_by, $sortOrder);
+        $query->orderBy($sortBy, $sortOrder);
 
         // AI Shortlist - sort by match score
         if ($request->has('ai_shortlist')) {
