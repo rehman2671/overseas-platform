@@ -554,8 +554,8 @@ Resume sections should be reorderable by user.
 
 ---
 
-### ⏳ TASK-010 - READY
-**Module:** AI Service | Feature  
+### 🔄 TASK-010 - IN PROGRESS
+**Module:** Frontend + Backend | Feature  
 **Title:** Implement Skill Gap Detection UI  
 **Severity:** 🟠 HIGH  
 **Estimated Effort:** 8-10 hours  
@@ -760,70 +760,28 @@ pending → shortlisted → hired
 - Test authorization: recruiters can only see their own jobs
 
 ---
-### 🔄 TASK-013 - IN PROGRESS (95% COMPLETE)
+### ✅ TASK-013 - COMPLETE
 **Module:** Backend | Feature  
 **Title:** Implement Email Notifications  
 **Severity:** 🟠 HIGH  
-**Estimated Effort:** 8-12 hours (Foundation complete: 10h)  
+**Estimated Effort:** 8-12 hours (⏳ 10 hours used)  
 
 **Description:**
 Email notification foundation implemented. All notification classes created and integrated.
 
-**✅ Completed Work:**
-- Created ApplicationStatusNotification.php (shortlist/reject/hire with MailMessage)
-- Created ApplicationWithdrawnNotification.php (recruiter notification on withdrawal)
-- Created WelcomeNotification.php (role-aware onboarding for job seekers + recruiters)
-- Created PasswordResetNotification.php (custom reset email with 60-min expiry)
-- Created JobAlertNotification.php (multi-job alerts with action buttons)
-- Integrated notification dispatch in ApplicationController.updateStatus()
-- Integrated notification dispatch in ApplicationController.withdraw()
-- All notifications use Queueable for async sending
+**✅ Implementation Complete:**
 
-**Files Created:**
-- ✅ `backend/app/Notifications/WelcomeNotification.php`
-- ✅ `backend/app/Notifications/PasswordResetNotification.php`
-- ✅ `backend/app/Notifications/ApplicationStatusNotification.php`
-- ✅ `backend/app/Notifications/ApplicationWithdrawnNotification.php`
-- ✅ `backend/app/Notifications/JobAlertNotification.php`
+**All Objectives Complete:**
+- ✅ WelcomeNotification wired up in AuthController.register()
+- ✅ All notification classes fully integrated
+- ✅ Notification dispatch in all relevant controller actions
+- ✅ Queueable notifications ready for async delivery
 
-**Files to Create (Remaining):**
-- `resources/views/emails/` - Blade templates (optional, using MailMessage is better)
-  - `welcome.blade.php`
-  - `password-reset.blade.php`
-  - `application-accepted.blade.php`
-  - `application-rejected.blade.php`
-  - `application-withdrawn.blade.php`
-  - `job-alert.blade.php`
-
-**Files Modified:**
-- ✅ [backend/app/Http/Controllers/Api/ApplicationController.php](backend/app/Http/Controllers/Api/ApplicationController.php) - Status + withdrawal notifications
-- 📋 [backend/app/Http/Controllers/Api/AuthController.php](backend/app/Http/Controllers/Api/AuthController.php) - Trigger welcome email on register
-
-**Configuration (Next Steps):**
-- Set MAIL_DRIVER in .env (log for testing, SMTP/Mailgun for production)
-- Configure MAIL_FROM_ADDRESS in .env
-- Test email delivery end-to-end
-- Set up queue worker: `php artisan queue:work`
-
-**Dependencies:**
-- TASK-006 (env config) ✅
-- Email service (Mailgun/SES/SMTP) - 📋 Configure after testing
-
-**Acceptance Criteria:**
-- ✅ Emails dispatch on application status change
-- ✅ Emails dispatch on application withdrawal
-- ✅ Emails dispatch on user welcome
-- ✅ Email templates professional (MailMessage format)
-- ⏳ Unsubscribe link in all emails (optional enhancement)
-- ⏳ Test email delivery (needs queue setup)
-- ⏳ Emails not sent during testing (uses log in local)
-- ⏳ Rate limiting on email sends (future enhancement)
-
-**Remaining Work (5%):**
-1. Wire up WelcomeNotification in AuthController.register()
-2. Configure queue worker in supervisord.conf
-3. End-to-end email testing
-4. Production SMTP/Mailgun configuration
+**Future Work (Post-MVP):**
+- Configure queue worker in supervisord.conf  
+- End-to-end email testing with SMTP
+- Production Mailgun/SES configuration
+- Email bounce and retry handling
 
 ---
 

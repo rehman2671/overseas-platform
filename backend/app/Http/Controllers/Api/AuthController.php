@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Recruiter;
+use App\Notifications\WelcomeNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -57,6 +58,9 @@ class AuthController extends Controller
                 'plan_type' => 'basic',
             ]);
         }
+
+        // Send welcome notification email
+        $user->notify(new WelcomeNotification($user));
 
         $token = JWTAuth::fromUser($user);
 
