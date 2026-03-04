@@ -48,7 +48,8 @@ export const resumeApi = {
   update: (id: string, data: any) => api.put(`/resumes/${id}`, data),
   delete: (id: string) => api.delete(`/resumes/${id}`),
   duplicate: (id: string, title: string) => api.post(`/resumes/${id}/duplicate`, { title }),
-  downloadPdf: (id: string) => api.get(`/resumes/${id}/pdf`, { responseType: 'blob' }),
+  // note: backend route uses /download which returns file response
+  downloadPdf: (id: string) => api.get(`/resumes/${id}/download`, { responseType: 'blob' }),
   getAtsScore: (id: string) => api.get(`/resumes/${id}/ats-score`),
   optimize: (id: string, jobId: string) => api.post(`/resumes/${id}/optimize`, { job_id: jobId }),
   parse: (file: File) => {

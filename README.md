@@ -175,7 +175,7 @@ docker-compose exec backend php artisan db:seed
 - `GET /api/resumes/:id` - Get resume details
 - `PUT /api/resumes/:id` - Update resume
 - `DELETE /api/resumes/:id` - Delete resume
-- `GET /api/resumes/:id/pdf` - Download PDF
+- `GET /api/resumes/:id/download` - Download PDF
 
 ### Jobs
 - `GET /api/jobs` - List jobs

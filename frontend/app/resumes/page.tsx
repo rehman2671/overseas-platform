@@ -86,6 +86,24 @@ export default function ResumesPage() {
     }
   };
 
+  const handleDownload = async (id: number, slug: string) => {
+    try {
+      const response = await resumeApi.downloadPdf(id.toString());
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${slug}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download failed', error);
+      toast.error('Failed to download PDF');
+    }
+  };
+
   const getAtsScoreColor = (score: number) => {
     if (score >= 80) return 'text-green-600 bg-green-50';
     if (score >= 60) return 'text-yellow-600 bg-yellow-50';
@@ -214,13 +232,13 @@ export default function ResumesPage() {
                       >
                         <Copy className="h-4 w-4" />
                       </button>
-                      <a
-                        href={`/api/resumes/${resume.id}/pdf`}
+                      <button
+                        onClick={() => handleDownload(resume.id, resume.slug)}
                         className="p-2 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
                         title="Download PDF"
                       >
                         <Download className="h-4 w-4" />
-                      </a>
+                      </button>
                       {!resume.is_default && (
                         <button
                           onClick={() => handleSetDefault(resume.id)}

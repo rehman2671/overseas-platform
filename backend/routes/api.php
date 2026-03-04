@@ -53,12 +53,14 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/resumes', [ResumeController::class, 'store']);
     Route::get('/resumes/{id}', [ResumeController::class, 'show']);
     Route::put('/resumes/{id}', [ResumeController::class, 'update']);
+    Route::get('/resumes/{id}/download', [ResumeController::class, 'downloadPdf']);
     Route::delete('/resumes/{id}', [ResumeController::class, 'destroy']);
     Route::post('/resumes/{id}/duplicate', [ResumeController::class, 'duplicate']);
     Route::post('/resumes/{id}/default', [ResumeController::class, 'setDefault']);
     Route::get('/resumes/{id}/pdf', [ResumeController::class, 'downloadPdf']);
     Route::get('/resumes/{id}/ats-score', [ResumeController::class, 'getAtsScore']);
     Route::post('/resumes/{id}/optimize', [ResumeController::class, 'optimize']);
+    Route::patch('/resumes/{id}/auto-save', [ResumeController::class, 'autoSave']);
     Route::post('/resumes/parse', [ResumeController::class, 'parseResume']);
 
     // Jobs

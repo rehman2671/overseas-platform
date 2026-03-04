@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { resumeApi, templateApi } from '@/lib/api';
 import { useQuery } from '@tanstack/react-query';
@@ -18,6 +18,11 @@ import {
   FileText,
   Sparkles
 } from 'lucide-react';
+import ExperienceStep from '@/components/resume-builder/ExperienceStep';
+import EducationStep from '@/components/resume-builder/EducationStep';
+import CertificationsStep from '@/components/resume-builder/CertificationsStep';
+import ProjectsStep from '@/components/resume-builder/ProjectsStep';
+import PreviewPanel from '@/components/resume-builder/PreviewPanel';
 import toast from 'react-hot-toast';
 
 interface Template {
@@ -43,6 +48,7 @@ export default function NewResumePage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [resumeId, setResumeId] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     template_id: '',
@@ -85,25 +91,61 @@ export default function NewResumePage() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      const response = await resumeApi.create({
-        title: formData.title || 'My Resume',
-        template_id: formData.template_id,
-        sections_json: formData,
-        personal_info: formData.personal_info,
-        summary: formData.summary,
-        experience: formData.experience,
-        education: formData.education,
-        skills: formData.skills,
-        certifications: formData.certifications,
-        projects: formData.projects,
-      });
-
-      toast.success('Resume created successfully!');
+      if (resumeId) {
+        // update existing resume
+        await resumeApi.update(resumeId.toString(), {
+          title: formData.title || 'My Resume',
+          template_id: formData.template_id,
+          sections_json: formData,
+          personal_info: formData.personal_info,
+          summary: formData.summary,
+          experience: formData.experience,
+          education: formData.education,
+          skills: formData.skills,
+          certifications: formData.certifications,
+          projects: formData.projects,
+        });
+        toast.success('Resume updated successfully!');
+      } else {
+        const response = await resumeApi.create({
+          title: formData.title || 'My Resume',
+          template_id: formData.template_id,
+          sections_json: formData,
+          personal_info: formData.personal_info,
+          summary: formData.summary,
+          experience: formData.experience,
+          education: formData.education,
+          skills: formData.skills,
+          certifications: formData.certifications,
+          projects: formData.projects,
+        });
+        setResumeId(response.data.data.id);
+        toast.success('Resume created successfully!');
+      }
       router.push('/resumes');
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to create resume');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // autosave draft when resumeId exists
+  useEffect(() => {
+    if (!resumeId) return;
+    const timer = setInterval(() => {
+      autoSaveDraft();
+    }, 30000);
+    return () => clearInterval(timer);
+  }, [resumeId, formData]);
+
+  const autoSaveDraft = async () => {
+    if (!resumeId) return;
+    try {
+      await resumeApi.autoSave(resumeId.toString(), formData);
+      console.debug('Draft auto-saved');
+    } catch (e) {
+      console.error('Auto-save failed', e);
     }
   };
 
@@ -313,6 +355,15 @@ export default function NewResumePage() {
           </div>
         );
 
+      case 'experience':
+        return <ExperienceStep data={formData} onChange={(field, value) => setFormData({ ...formData, [field]: value })} />;
+      case 'education':
+        return <EducationStep data={formData} onChange={(field, value) => setFormData({ ...formData, [field]: value })} />;
+      case 'certifications':
+        return <CertificationsStep data={formData} onChange={(field, value) => setFormData({ ...formData, [field]: value })} />;
+      case 'projects':
+        return <ProjectsStep data={formData} onChange={(field, value) => setFormData({ ...formData, [field]: value })} />;
+
       default:
         return (
           <div className="text-center py-12">
@@ -376,12 +427,17 @@ export default function NewResumePage() {
           </div>
         </div>
 
-        {/* Step Content */}
-        <div className="card p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-6">
-            {steps[currentStep].label}
-          </h2>
-          {renderStepContent()}
+        {/* Step Content + Preview for large screens */}
+        <div className="lg:flex lg:space-x-8">
+          <div className="card p-6 lg:w-2/3">
+            <h2 className="text-lg font-semibold text-gray-900 mb-6">
+              {steps[currentStep].label}
+            </h2>
+            {renderStepContent()}
+          </div>
+          <div className="hidden lg:block lg:w-1/3">
+            <PreviewPanel data={formData} />
+          </div>
         </div>
 
         {/* Navigation */}

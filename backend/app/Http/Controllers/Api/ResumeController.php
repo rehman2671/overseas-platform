@@ -7,6 +7,7 @@ use App\Models\Resume;
 use App\Models\Template;
 use App\Services\AiService;
 use App\Services\PdfService;
+use App\Services\FileValidationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -15,11 +16,13 @@ class ResumeController extends Controller
 {
     protected $aiService;
     protected $pdfService;
+    protected $fileValidator;
 
-    public function __construct(AiService $aiService, PdfService $pdfService)
+    public function __construct(AiService $aiService, PdfService $pdfService, FileValidationService $fileValidator)
     {
         $this->aiService = $aiService;
         $this->pdfService = $pdfService;
+        $this->fileValidator = $fileValidator;
     }
 
     public function index(Request $request)
@@ -194,6 +197,15 @@ class ResumeController extends Controller
         ]);
     }
 
+    public function downloadPdf($id)
+    {
+        $user = auth()->user();
+        $resume = Resume::where('user_id', $user->id)->findOrFail($id);
+
+        $pdf = $this->pdfService->generateResumePdf($resume);
+        return $pdf->download($resume->slug . '.pdf');
+    }
+
     public function destroy($id)
     {
         $user = auth()->user();
@@ -349,25 +361,58 @@ class ResumeController extends Controller
 
     public function parseResume(Request $request)
     {
+        $user = auth()->user();
+
+        // Basic request validation
         $validator = Validator::make($request->all(), [
-            'file' => 'required|file|mimes:pdf,docx,doc|max:10240',
+            'file' => 'required|file',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
+                'message' => 'File is required',
                 'errors' => $validator->errors()
             ], 422);
         }
 
         $file = $request->file('file');
-        $parsed = $this->aiService->parseResume($file);
 
-        return response()->json([
-            'success' => true,
-            'data' => $parsed
-        ]);
+        // Validate file using File Validation Service
+        $validation = $this->fileValidator->validate($file);
+        if (!$validation['valid']) {
+            return response()->json([
+                'success' => false,
+                'message' => 'File validation failed',
+                'error' => $validation['error']
+            ], 422);
+        }
+
+        try {
+            // Get temporary file path for processing
+            $tempPath = $this->fileValidator->getTempPath($file);
+
+            // Parse resume using AI service
+            $parsed = $this->aiService->parseResume($file);
+
+            // Store file securely if parsing successful
+            if ($parsed && isset($parsed['data'])) {
+                $storagePath = $this->fileValidator->storeFile($file, strval($user->id));
+                $parsed['data']['file_path'] = $storagePath;
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $parsed['data'] ?? null,
+                'processing_time_ms' => $parsed['processing_time_ms'] ?? null
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to parse resume',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     private function calculateAtsScore(Resume $resume): void
@@ -377,6 +422,56 @@ class ResumeController extends Controller
         $resume->update([
             'ats_score' => $result['score'],
             'ats_feedback' => $result['feedback'],
+        ]);
+    }
+
+    public function autoSave(Request $request, $id)
+    {
+        $user = auth()->user();
+        
+        $resume = Resume::where('user_id', $user->id)->findOrFail($id);
+
+        // Accept any partial data for draft saving
+        $data = [];
+
+        // Only accept specific fields to prevent injection
+        $allowedFields = [
+            'title', 'personal_info', 'summary', 'experience', 
+            'education', 'skills', 'certifications', 'projects', 
+            'languages', 'sections_json'
+        ];
+
+        foreach ($allowedFields as $field) {
+            if ($request->has($field)) {
+                if ($field === 'sections_json') {
+                    // Validate JSON structure
+                    $json = json_decode($request->input($field), true);
+                    if ($json === null) {
+                        continue; // Skip invalid JSON
+                    }
+                    $data[$field] = $json;
+                } else {
+                    $data[$field] = $request->input($field);
+                }
+            }
+        }
+
+        if (empty($data)) {
+            return response()->json([
+                'success' => true,
+                'message' => 'No changes to save',
+                'data' => $resume->load('template')
+            ]);
+        }
+
+        // Save without full validation (draft mode)
+        $resume->update($data);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Resume auto-saved successfully',
+            'data' => $resume->load('template'),
+            'last_saved_at' => $resume->updated_at
         ]);
     }
 }

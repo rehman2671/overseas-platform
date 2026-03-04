@@ -27,13 +27,22 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS middleware
+# CORS middleware - Restrict to only authorized origins
+ALLOWED_ORIGINS = [
+    "http://localhost",
+    "http://localhost:3000",
+    "http://localhost:80",
+    "http://frontend",
+    "http://frontend:3000",
+    os.getenv("FRONTEND_URL", "http://localhost"),
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=False,  # Credentials disabled for security
+    allow_methods=["POST", "GET"],  # Only POST and GET for AI endpoints
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 # Load model at startup
