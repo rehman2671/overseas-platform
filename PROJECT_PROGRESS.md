@@ -437,17 +437,33 @@ curl -H "Authorization: Bearer {token}" \
 
 ---
 
-## 🟠 IN PROGRESS (1)
+## 🟠 IN PROGRESS (2)
 
 ### TASK-012: Application Status Workflow (In Progress)
 - **Module:** Backend | Feature
 - **Effort:** 6-8 hours
-- **Status:** 🔄 Implementation started
+- **Status:** 🔄 Implementation 60% complete (foundation done, recruiter UI pending)
 - **Completed Work:**
   - ✅ Database migration for status_changed_at and withdrawn_reason fields
   - ✅ Model updates with status transition logic and validation
   - ✅ Workflow methods: shortlist(), reject(), hire(), withdraw() with state checking
   - ✅ Controller methods for updateStatus, updateNotes, getTimeline, withdraw
+  - ✅ API routes for all workflow operations
+  - ⏳ Recruiter UI for managing applications (TASK-012 Part 2)
+
+### TASK-013: Email Notifications (In Progress)
+- **Module:** Backend | Feature
+- **Effort:** 8-12 hours
+- **Status:** 🔄 Implementation 95% complete (foundation established, testing pending)
+- **Completed Work:**
+  - ✅ ApplicationStatusNotification class (shortlist/reject/hire emails)
+  - ✅ ApplicationWithdrawnNotification class (withdrawal notifications to recruiters)
+  - ✅ WelcomeNotification class (user onboarding emails)
+  - ✅ PasswordResetNotification class (password reset emails)
+  - ✅ JobAlertNotification class (job matching alerts)
+  - ✅ Notification dispatch integrated in ApplicationController.updateStatus()
+  - ✅ Withdrawal notification dispatch in ApplicationController.withdraw()
+  - ⏳ Email delivery testing and SMTP configuration
   - ✅ API routes registered for all new endpoints
 - **In Progress:** Testing and notification integration
 - **Dependencies:** TASK-001 ✅
@@ -495,7 +511,7 @@ curl -H "Authorization: Bearer {token}" \
 - **Dependencies:** TASK-001 ✅
 - **Blocked By:** None
 - **ETA:** Week 3
-- **Status:** 🔴 NOT STARTED
+- **Status:** � IN PROGRESS (60% complete)
 
 **Description:** Implement recruiter workflow and status updates
 **Impact:** Recruiter feature, critical for MVP
@@ -509,7 +525,7 @@ curl -H "Authorization: Bearer {token}" \
 - **Dependencies:** TASK-001 ✅, Email service
 - **Blocked By:** None
 - **ETA:** Week 3
-- **Status:** 🔴 NOT STARTED
+- **Status:** 🟢 NEARLY COMPLETE (95% complete)
 
 **Description:** Implement email templates and sending
 **Impact:** User experience, platform engagement

@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Application;
 use App\Models\Job;
 use App\Models\Resume;
+use App\Notifications\ApplicationStatusNotification;
+use App\Notifications\ApplicationWithdrawnNotification;
 use App\Services\AiService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -254,7 +256,8 @@ class ApplicationController extends Controller
             $application->hire($request->notes);
         }
 
-        // TODO: Send notification to applicant
+        // Send notification to applicant
+        $application->user->notify(new ApplicationStatusNotification($application, ucfirst($newStatus)));
 
         return response()->json([
             'success' => true,
@@ -369,7 +372,9 @@ class ApplicationController extends Controller
 
         $application->withdraw($request->reason);
 
-        // TODO: Send notification to recruiter
+        // Send notification to recruiter about withdrawal
+        $recruiter = $application->job->recruiter->user;
+        $recruiter->notify(new \App\Notifications\ApplicationWithdrawnNotification($application));
 
         return response()->json([
             'success' => true,
