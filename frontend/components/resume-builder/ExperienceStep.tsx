@@ -1,5 +1,6 @@
 import React from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import { X, Plus, GripVertical } from 'lucide-react';
 
 interface ExperienceEntry {
   company: string;
@@ -41,89 +42,122 @@ export default function ExperienceStep({ data, onChange }: ExperienceStepProps) 
   };
 
   return (
-    <div>
-      <h2 className="text-xl font-semibold mb-4">Work Experience</h2>
-      <DragDropContext onDragEnd={onDragEnd}>
-        <Droppable droppableId="experience-list">
-          {(provided) => (
-            <div ref={provided.innerRef} {...provided.droppableProps}>
-              {experiences.map((exp, idx) => (
-                <Draggable key={idx} draggableId={`exp-${idx}`} index={idx}>
-                  {(provided) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
-                      className="border p-4 rounded mb-4"
-                    >
-                      <div {...provided.dragHandleProps} className="cursor-move mb-2 text-gray-400">
-                        ☰ Drag
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <label className="block">
-                          <span>Company</span>
-                          <input
-                            type="text"
-                            value={exp.company}
-                            onChange={(e) => updateEntry(idx, 'company', e.target.value)}
-                            className="mt-1 block w-full border-gray-300 rounded-md"
-                          />
-                        </label>
-                        <label className="block">
-                          <span>Title</span>
-                          <input
-                            type="text"
-                            value={exp.title}
-                            onChange={(e) => updateEntry(idx, 'title', e.target.value)}
-                            className="mt-1 block w-full border-gray-300 rounded-md"
-                          />
-                        </label>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                        <label className="block">
-                          <span>Start Date</span>
-                          <input
-                            type="date"
-                            value={exp.start_date}
-                            onChange={(e) => updateEntry(idx, 'start_date', e.target.value)}
-                            className="mt-1 block w-full border-gray-300 rounded-md"
-                          />
-                        </label>
-                        <label className="block">
-                          <span>End Date</span>
-                          <input
-                            type="date"
-                            value={exp.end_date}
-                            onChange={(e) => updateEntry(idx, 'end_date', e.target.value)}
-                            className="mt-1 block w-full border-gray-300 rounded-md"
-                          />
-                        </label>
-                      </div>
-                      <label className="block mt-4">
-                        <span>Description</span>
-                        <textarea
-                          value={exp.description}
-                          onChange={(e) => updateEntry(idx, 'description', e.target.value)}
-                          className="mt-1 block w-full border-gray-300 rounded-md"
-                          rows={3}
-                        />
-                      </label>
-                      <button
-                        onClick={() => removeEntry(idx)}
-                        className="text-red-600 mt-2 text-sm"
+    <div className="space-y-4">
+      {experiences.length === 0 ? (
+        <p className="text-sm text-gray-500 text-center py-4">No work experience yet. Add your professional experience to get started.</p>
+      ) : (
+        <DragDropContext onDragEnd={onDragEnd}>
+          <Droppable droppableId="experience-list">
+            {(provided, snapshot) => (
+              <div
+                ref={provided.innerRef}
+                {...provided.droppableProps}
+                className={`space-y-4 ${snapshot.isDraggingOver ? 'bg-primary-50 rounded-lg p-2' : ''}`}
+              >
+                {experiences.map((exp, idx) => (
+                  <Draggable key={idx} draggableId={`exp-${idx}`} index={idx}>
+                    {(provided, snapshot) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        className={`border rounded-lg p-4 transition-all ${
+                          snapshot.isDragging ? 'shadow-lg bg-white' : 'border-gray-200 hover:shadow-md'
+                        }`}
                       >
-                        Remove
-                      </button>
-                    </div>
-                  )}
-                </Draggable>
-              ))}
-              {provided.placeholder}
-            </div>
-          )}
-        </Droppable>
-      </DragDropContext>
-      <button onClick={addEntry} className="btn-outline">
-        + Add Experience
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex items-center gap-3 flex-1">
+                            <div {...provided.dragHandleProps} className="text-gray-400 hover:text-gray-600 cursor-move">
+                              <GripVertical className="h-4 w-4" />
+                            </div>
+                            <h3 className="font-medium text-gray-900 flex-1">
+                              {exp.title || exp.company || `Experience ${idx + 1}`}
+                            </h3>
+                          </div>
+                          <button
+                            onClick={() => removeEntry(idx)}
+                            className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                            title="Remove"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Company *
+                              </label>
+                              <input
+                                type="text"
+                                value={exp.company}
+                                onChange={(e) => updateEntry(idx, 'company', e.target.value)}
+                                placeholder="e.g., Google"
+                                className="input"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Job Title *
+                              </label>
+                              <input
+                                type="text"
+                                value={exp.title}
+                                onChange={(e) => updateEntry(idx, 'title', e.target.value)}
+                                placeholder="e.g., Senior Software Engineer"
+                                className="input"
+                              />
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Start Date
+                              </label>
+                              <input
+                                type="date"
+                                value={exp.start_date}
+                                onChange={(e) => updateEntry(idx, 'start_date', e.target.value)}
+                                className="input"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                End Date
+                              </label>
+                              <input
+                                type="date"
+                                value={exp.end_date}
+                                onChange={(e) => updateEntry(idx, 'end_date', e.target.value)}
+                                className="input"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Description
+                            </label>
+                            <textarea
+                              value={exp.description}
+                              onChange={(e) => updateEntry(idx, 'description', e.target.value)}
+                              placeholder="Describe your responsibilities and accomplishments..."
+                              className="input"
+                              rows={3}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
+      )}
+      <button onClick={addEntry} className="btn-outline flex items-center justify-center w-full">
+        <Plus className="h-4 w-4 mr-2" />
+        Add Experience
       </button>
     </div>
   );

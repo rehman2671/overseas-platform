@@ -154,30 +154,30 @@ app.add_middleware(
 
 ---
 
-### ⏳ TASK-004 - IN PROGRESS
+### ✅ TASK-004 - COMPLETE
 **Module:** Frontend | Feature  
 **Title:** Resume Builder UI – 7-Step Form  
 **Severity:** 🔴 CRITICAL  
-**Estimated Effort:** 20-24 hours total (≈12-16h remaining)  
+**Estimated Effort:** 20-24 hours (Actual: ~18-20 hours)  
+**Completed:** March 4, 2026
 
 **Description:**
-Form partially implemented; template selector, personal info, summary and skills steps are working. Remaining sections (experience, education, certifications, projects) have been modularized and require additional form fields, preview panel, validation, and mobile polish. Completing this task unlocks full resume creation and publishing.
+Complete 8-step guided form for resume creation. All sections fully implemented with drag-and-drop for experience, form validation, auto-save drafts, and live JSON preview. Mobile responsive and production-ready.
 
-**Files to Create/Modify:**
-- `frontend/app/resumes/new/page.tsx` - Main form (already exists, refactor into components)
-- `frontend/components/resume-builder/` (directory created)
-  - StepIndicator.tsx (basic progress indicator)
-  - BasicInfoStep.tsx (name/email/location)
-  - ExperienceStep.tsx (added dynamic entries)
-  - EducationStep.tsx (added dynamic entries)
-  - SkillsStep.tsx (tags implemented inline)
-  - ProjectsStep.tsx (added dynamic entries)
-  - CertificationsStep.tsx (added dynamic entries)
-  - SummaryStep.tsx (text area)
-  - PreviewPanel.tsx (placeholder for live preview)
-
-**Files to Modify:**
-- [frontend/app/resumes/page.tsx](frontend/app/resumes/page.tsx) - Add "Create New" button
+**Files Created/Modified:**
+- `frontend/app/resumes/new/page.tsx` - Complete orchestrator with validation
+- `frontend/components/resume-builder/` (9 components created)
+  - ✅ StepIndicator.tsx (progress display)
+  - ✅ BasicInfoStep.tsx (personal info)
+  - ✅ ExperienceStep.tsx (drag-and-drop reorder)
+  - ✅ EducationStep.tsx (education entries)
+  - ✅ SkillsStep.tsx (tag-based skills)
+  - ✅ ProjectsStep.tsx (portfolio entries)
+  - ✅ CertificationsStep.tsx (credentials)
+  - ✅ SummaryStep.tsx (professional summary)
+  - ✅ PreviewPanel.tsx (live JSON preview)
+- ✅ `frontend/lib/api.ts` - Added autoSave() method
+- ✅ `frontend/app/resumes/page.tsx` - Download button integration
 
 **Implementation Details:**
 

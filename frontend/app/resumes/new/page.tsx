@@ -76,9 +76,46 @@ export default function NewResumePage() {
     },
   });
 
+  const validateCurrentStep = (): boolean => {
+    const stepId = steps[currentStep].id;
+    switch (stepId) {
+      case 'template':
+        if (!formData.template_id) {
+          toast.error('Please select a template and provide a title.');
+          return false;
+        }
+        return true;
+      case 'personal':
+        if (!formData.personal_info.name || !formData.personal_info.email) {
+          toast.error('Name and email are required.');
+          return false;
+        }
+        return true;
+      case 'summary':
+        // no requirement
+        return true;
+      case 'skills':
+        // no requirement
+        return true;
+      case 'experience':
+        // optional
+        return true;
+      case 'education':
+        return true;
+      case 'certifications':
+        return true;
+      case 'projects':
+        return true;
+      default:
+        return true;
+    }
+  };
+
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
+      if (validateCurrentStep()) {
+        setCurrentStep(currentStep + 1);
+      }
     }
   };
 

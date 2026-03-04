@@ -46,6 +46,7 @@ export const resumeApi = {
   getById: (id: string) => api.get(`/resumes/${id}`),
   create: (data: any) => api.post('/resumes', data),
   update: (id: string, data: any) => api.put(`/resumes/${id}`, data),
+  autoSave: (id: string, data: any) => api.patch(`/resumes/${id}/auto-save`, data),
   delete: (id: string) => api.delete(`/resumes/${id}`),
   duplicate: (id: string, title: string) => api.post(`/resumes/${id}/duplicate`, { title }),
   // note: backend route uses /download which returns file response
