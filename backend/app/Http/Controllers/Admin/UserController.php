@@ -97,14 +97,27 @@ class UserController extends Controller
         ]);
     }
 
-    public function activate($id)
+    public function updateStatus(Request $request, $id)
     {
         $user = User::findOrFail($id);
-        $user->update(['is_active' => true]);
+
+        $validator = Validator::make($request->all(), [
+            'is_active' => 'required|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $user->update(['is_active' => $request->is_active]);
 
         return response()->json([
             'success' => true,
-            'message' => 'User activated successfully',
+            'message' => 'User status updated successfully',
             'data' => $user
         ]);
     }

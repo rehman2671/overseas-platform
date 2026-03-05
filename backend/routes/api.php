@@ -124,6 +124,12 @@ Route::middleware('auth:api')->group(function () {
 Route::middleware(['auth:api', 'admin'])->prefix('admin')->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index']);
     Route::get('/users', [\App\Http\Controllers\Admin\UserController::class, 'index']);
+    Route::get('/users/{id}', [\App\Http\Controllers\Admin\UserController::class, 'show']);
+    Route::patch('/users/{id}/status', [\App\Http\Controllers\Admin\UserController::class, 'updateStatus']);
+    Route::put('/users/{id}', [\App\Http\Controllers\Admin\UserController::class, 'update']);
+    Route::delete('/users/{id}', [\App\Http\Controllers\Admin\UserController::class, 'destroy']);
+    Route::post('/users/{id}/activate', [\App\Http\Controllers\Admin\UserController::class, 'activate']);
+    Route::post('/users/{id}/impersonate', [\App\Http\Controllers\Admin\UserController::class, 'impersonate']);
     Route::get('/jobs', [\App\Http\Controllers\Admin\JobController::class, 'index']);
     Route::get('/applications', [\App\Http\Controllers\Admin\ApplicationController::class, 'index']);
     Route::get('/payments', [\App\Http\Controllers\Admin\PaymentController::class, 'index']);

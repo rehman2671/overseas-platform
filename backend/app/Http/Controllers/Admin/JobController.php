@@ -54,14 +54,12 @@ class JobController extends Controller
         ]);
     }
 
-    public function update(Request $request, $id)
+    public function updateStatus(Request $request, $id)
     {
         $job = Job::findOrFail($id);
 
         $validator = Validator::make($request->all(), [
-            'status' => 'sometimes|in:draft,active,paused,closed',
-            'featured' => 'sometimes|boolean',
-            'featured_until' => 'nullable|date',
+            'status' => 'required|in:draft,active,paused,closed',
         ]);
 
         if ($validator->fails()) {
@@ -72,11 +70,11 @@ class JobController extends Controller
             ], 422);
         }
 
-        $job->update($request->only(['status', 'featured', 'featured_until']));
+        $job->update(['status' => $request->status]);
 
         return response()->json([
             'success' => true,
-            'message' => 'Job updated successfully',
+            'message' => 'Job status updated successfully',
             'data' => $job
         ]);
     }

@@ -18,6 +18,19 @@ class UserSeeder extends Seeder
     {
         DB::table('users')->truncate();
 
+        // Create admin user
+        DB::table('users')->insert([
+            'name' => 'Admin User',
+            'email' => 'admin@overseasjob.in',
+            'password' => Hash::make('admin123'),
+            'role' => 'admin',
+            'is_active' => true,
+            'email_verified_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Create demo user
         DB::table('users')->insert([
             'name' => 'Demo User',
             'email' => 'demo@example.com',
